@@ -1,0 +1,31 @@
+spring:
+  profiles:
+    active: dev
+
+logging:
+  config: classpath:config/log4j2.xml
+  level:
+    root: info
+
+mybatis-plus:
+  type-aliases-package: com.pighand.notify.domain, com.pighand.notify.vo
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+pighand:
+  exception:
+    intercept-exception: true
+
+#springdoc:
+# 设置api-docs
+#  api-docs:
+#    # 设置api-docs路径 默认: /v3/api-docs 如果开启了管理端口，那么这个也就失效了直接用/actuator/group-name代替
+#    path: /api-docs
+#    # 是否启用 默认: true
+#    enabled: true
+
+#    swagger-ui配置 支持所有官方属性https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    设置可以直接从应用根路径访问swagger-ui
+#    use-root-path: true

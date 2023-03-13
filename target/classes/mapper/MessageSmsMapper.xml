@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pighand.notify.mapper.MessageSmsMapper">
+    <sql id="Base_Column_List">
+        `id`,`project_id`,`cloud_platform`,`appid`,`secret`,`scene`,`sign_name`,`template_code`,`template_param`
+    </sql>
+
+    <select id="query" resultType="com.pighand.notify.vo.MessageSmsVO">
+        select
+        <include refid="Base_Column_List"/>
+        from message_sms
+    </select>
+
+</mapper>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration status="WARN" monitorInterval="30">
+    <properties>
+        <!--日志目录-->
+        <property name="LOG_HOME">./logs</property>
+        <!--备份目录- 根据年月建立文件夹 -->
+        <property name="BACKUP_HOME">${LOG_HOME}/history</property>
+        <!--备份频率-->
+        <property name="BACK_Hz">%d{yyyy-MM-dd}-%i</property>
+        <!--备份保留时间-->
+        <property name="BACK_RETAIN">7d</property>
+        <!--日志格式-->
+        <property name="LOG_FORMAT">[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%thread] %highlight{[%p]}{ERROR=Bright RED,
+            WARN=Bright Yellow, INFO=Bright Green, DEBUG=Bright Cyan, TRACE=Bright White} %style{%l}{cyan} : %m%n
+        </property>
+    </properties>
+
+    <!-- ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < OFF -->
+    <appenders>
+        <!-- 控制台输出 -->
+        <console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_FORMAT}"/>
+        </console>
+
+        <!-- trace级别文件输出 -->
+        <RollingFile name="trace"
+                     fileName="${LOG_HOME}/trace.log"
+                     filePattern="${BACKUP_HOME}/trace-${BACK_Hz}.log">
+            <PatternLayout pattern="${LOG_FORMAT}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+            </Policies>
+
+            <!-- 自动删除-->
+            <DefaultRolloverStrategy>
+                <Delete basePath="${BACKUP_HOME}/" maxDepth="1">
+                    <IfFileName glob="trace-*.log"/>
+                    <IfLastModified age="${BACK_RETAIN}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+
+            <Filters>
+                <ThresholdFilter level="all" onMatch="DENY" onMisMatch="NEUTRAL"/>
+                <ThresholdFilter level="trace" onMatch="ACCEPT" onMisMatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- warn级别文件输出 -->
+        <RollingFile name="warn"
+                     fileName="${LOG_HOME}/warn.log"
+                     filePattern="${BACKUP_HOME}/warn-${BACK_Hz}.log">
+            <PatternLayout pattern="${LOG_FORMAT}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+            </Policies>
+
+            <!-- 自动删除-->
+            <DefaultRolloverStrategy>
+                <Delete basePath="${BACKUP_HOME}/" maxDepth="1">
+                    <IfFileName glob="warn-*.log"/>
+                    <IfLastModified age="${BACK_RETAIN}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+
+            <Filters>
+                <ThresholdFilter level="info" onMatch="DENY" onMisMatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="ACCEPT" onMisMatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- error级别文件输出 -->
+        <RollingFile name="error"
+                     fileName="${LOG_HOME}/error.log"
+                     filePattern="${BACKUP_HOME}/error-${BACK_Hz}.log">
+            <PatternLayout pattern="${LOG_FORMAT}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+            </Policies>
+
+            <!-- 自动删除-->
+            <DefaultRolloverStrategy>
+                <Delete basePath="${BACKUP_HOME}/" maxDepth="1">
+                    <IfFileName glob="error-*.log"/>
+                    <IfLastModified age="${BACK_RETAIN}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+
+            <Filters>
+                <ThresholdFilter level="warn" onMatch="DENY" onMisMatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="ACCEPT" onMisMatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- quartz文件输出 -->
+        <RollingFile name="quartz"
+                     fileName="${LOG_HOME}/quartz.log"
+                     filePattern="${BACKUP_HOME}/quartz-${BACK_Hz}.log">
+            <PatternLayout pattern="${LOG_FORMAT}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+            </Policies>
+
+            <!-- 自动删除-->
+            <DefaultRolloverStrategy>
+                <Delete basePath="${BACKUP_HOME}/" maxDepth="1">
+                    <IfFileName glob="quartz-*.log"/>
+                    <IfLastModified age="${BACK_RETAIN}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+
+            <Filters>
+                <ThresholdFilter level="debug" onMatch="DENY" onMisMatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMisMatch="DENY"/>
+            </Filters>
+        </RollingFile>
+    </appenders>
+
+    <loggers>
+        <!-- 过滤掉一些无用的DEBUG信息 -->
+        <logger name="org.springframework" level="INFO"/>
+        <logger name="org.mybatis" level="INFO"/>
+
+        <!-- sql日志 -->
+        <logger name="druid.sql.Statement" level="DEBUG" additivity="false">
+            <appender-ref ref="Console"/>
+        </logger>
+
+        <!-- quartz日志 -->
+        <logger name="com.fastjavaframework.quartz" level="INFO">
+            <appender-ref ref="RollingFileQuartz"/>
+        </logger>
+
+        <root level="INFO">
+            <appender-ref ref="console"/>
+            <appender-ref ref="trace"/>
+            <appender-ref ref="warn"/>
+            <appender-ref ref="error"/>
+        </root>
+    </loggers>
+</configuration>

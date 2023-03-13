@@ -1,0 +1,74 @@
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.pighand</groupId>
+    <artifactId>pighand-notify</artifactId>
+    <version>0.0.1</version>
+
+    <packaging>jar</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>统一通知系统</description>
+
+    <scm>
+        <url>https://github.com/pighand-com/pighand-notify</url>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>The MIT License</name>
+            <url>https://mit-license.org/</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>wangshuli</name>
+            <email>xiaoyao495@163.com</email>
+            <organization>free man</organization>
+            <organizationUrl>https://github.com/shuli495</organizationUrl>
+        </developer>
+    </developers>
+
+    <parent>
+        <groupId>com.pighand</groupId>
+        <artifactId>pighand-framework-spring-parent</artifactId>
+        <version>1.1.4</version>
+    </parent>
+
+    <properties>
+        <jakarta.mail.version>2.0.1</jakarta.mail.version>
+        <tencentcloud-sdk-java.version>3.1.697</tencentcloud-sdk-java.version>
+        <alibabacloud-dysmsapi20170525.version>2.0.22</alibabacloud-dysmsapi20170525.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>${jakarta.mail.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java</artifactId>
+            <version>${tencentcloud-sdk-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>alibabacloud-dysmsapi20170525</artifactId>
+            <version>${alibabacloud-dysmsapi20170525.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+    </build>
+</project>

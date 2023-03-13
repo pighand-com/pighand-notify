@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pighand.notify.mapper.MessageContentMapper">
+    <sql id="Base_Column_List">
+        `id`,`project_id`,`scene`,`title`,`template`,`def_sender_type`,`def_sender_id`
+    </sql>
+
+    <select id="query" resultType="com.pighand.notify.vo.MessageContentVO">
+        select
+        <include refid="Base_Column_List"/>
+        from message_content
+    </select>
+
+</mapper>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pighand.notify.mapper.SenderEmailMapper">
+    <sql id="Base_Column_List">
+        `id`,`project_id`,`account`,`name`,`password`,`protocol`,`host`,`port`,`ssl`
+    </sql>
+
+    <select id="query" resultType="com.pighand.notify.vo.SenderEmailVO">
+        select
+        <include refid="Base_Column_List"/>
+        from sender_email
+    </select>
+
+</mapper>
