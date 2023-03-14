@@ -28,7 +28,8 @@ public class MessageContentController extends BaseController<MessageContentServi
      */
     @Post(docSummary = "创建", fieldGroup = "messageContentCreate")
     public Result<MessageContentVO> create(
-        @Validated({ValidationGroup.Create.class}) @RequestBody MessageContentVO messageContentVO) {
+            @Validated({ValidationGroup.Create.class}) @RequestBody
+                    MessageContentVO messageContentVO) {
         messageContentVO = super.service.create(messageContentVO);
 
         return new Result(messageContentVO);

@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -48,6 +48,22 @@ import java.util.Map;
 @Slf4j
 @Component
 public abstract class BaseSenderAbstract<T extends SendCommonVO> {
+    private ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+
+    @Value("${pighand.notify.async-sender-pool.core: 1}")
+    private Integer asyncSenderPoolCore;
+
+    @Value("${pighand.notify.async-sender-pool.max: 4}")
+    private Integer asyncSenderPoolMax;
+
+    @Value("${pighand.notify.async-sender-pool.capacity: 100}")
+    private Integer asyncSenderPoolCapacity;
+
+    @Value("${pighand.notify.async-sender-pool.keep-alive: 60}")
+    private Integer asyncSenderPoolKeepAlive;
+
+    @Value("${pighand.notify.async-sender-pool.thread-name: 'async-sender-'}")
+    private String asyncSenderPoolThreadName;
 
     @Value("${pighand.notify.queue: #{null}}")
     private String configQueueName;
@@ -66,6 +82,15 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
 
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) {
+        // 设置异步执行线程池
+        executor.setCorePoolSize(this.asyncSenderPoolCore);
+        executor.setMaxPoolSize(this.asyncSenderPoolMax);
+        executor.setQueueCapacity(this.asyncSenderPoolCapacity);
+        executor.setKeepAliveSeconds(this.asyncSenderPoolKeepAlive);
+        executor.setThreadNamePrefix(this.asyncSenderPoolThreadName);
+        executor.initialize();
+
+        // 启用队列
         if (StringUtils.hasText(configQueueName)) {
             this.queue = (QueueInterface<T, Object>) applicationContext.getBean(configQueueName);
 
@@ -169,6 +194,7 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
 
         Map<EnumTemplateParams, Object> returnParams = this.replaceSendContent(message);
 
+        // 内部异步实现发送
         Boolean isHasSendAsync = internalSendAsync(message);
 
         if (isHasSendAsync) {
@@ -176,17 +202,21 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
         }
 
         if (this.isEnabledQueue) {
+            // 消息队列发送
             this.push(message);
         } else {
-            this._sendAsync(message);
+            // 异步线程发送消息
+            executor.execute(
+                    () -> {
+                        try {
+                            this.send(message);
+                        } catch (Exception e) {
+                            log.error(e.getMessage());
+                        }
+                    });
         }
 
         return returnParams;
-    }
-
-    @Async
-    void _sendAsync(T message) throws Exception {
-        this.send(message);
     }
 
     /**

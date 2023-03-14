@@ -8,10 +8,10 @@ import com.pighand.framework.spring.response.Result;
 import com.pighand.notify.domain.MessageSmsDomain;
 import com.pighand.notify.service.MessageSmsService;
 import com.pighand.notify.vo.MessageSmsVO;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-
 
 /**
  * 短信消息
@@ -28,7 +28,7 @@ public class MessageSmsController extends BaseController<MessageSmsService> {
      */
     @Post(docSummary = "创建", fieldGroup = "messageSmsCreate")
     public Result<MessageSmsVO> create(
-        @Validated({ValidationGroup.Create.class}) @RequestBody MessageSmsVO messageSmsVO) {
+            @Validated({ValidationGroup.Create.class}) @RequestBody MessageSmsVO messageSmsVO) {
         messageSmsVO = super.service.create(messageSmsVO);
 
         return new Result(messageSmsVO);
@@ -38,7 +38,7 @@ public class MessageSmsController extends BaseController<MessageSmsService> {
      * @param id
      * @return
      */
-    @Get(path = "/{id}", docSummary = "详情")
+    @Get(path = "{id}", docSummary = "详情")
     public Result<MessageSmsDomain> find(@PathVariable(name = "id") Long id) {
         MessageSmsDomain messageSmsDomain = super.service.find(id);
 
@@ -59,7 +59,8 @@ public class MessageSmsController extends BaseController<MessageSmsService> {
      * @param messageSmsVO
      */
     @Put(path = "{id}", docSummary = "修改", fieldGroup = "messageSmsUpdate")
-    public Result update(@PathVariable(name = "id") Long id, @RequestBody MessageSmsVO messageSmsVO) {
+    public Result update(
+            @PathVariable(name = "id") Long id, @RequestBody MessageSmsVO messageSmsVO) {
         messageSmsVO.setId(id);
         super.service.update(messageSmsVO);
 

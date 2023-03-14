@@ -8,10 +8,10 @@ import com.pighand.framework.spring.response.Result;
 import com.pighand.notify.domain.SenderEmailDomain;
 import com.pighand.notify.service.SenderEmailService;
 import com.pighand.notify.vo.SenderEmailVO;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-
 
 /**
  * 发送邮箱配置
@@ -28,7 +28,7 @@ public class SenderEmailController extends BaseController<SenderEmailService> {
      */
     @Post(docSummary = "创建", fieldGroup = "senderEmailCreate")
     public Result<SenderEmailVO> create(
-        @Validated({ValidationGroup.Create.class}) @RequestBody SenderEmailVO senderEmailVO) {
+            @Validated({ValidationGroup.Create.class}) @RequestBody SenderEmailVO senderEmailVO) {
         senderEmailVO = super.service.create(senderEmailVO);
 
         return new Result(senderEmailVO);
@@ -38,7 +38,7 @@ public class SenderEmailController extends BaseController<SenderEmailService> {
      * @param id
      * @return
      */
-    @Get(path = "/{id}", docSummary = "详情")
+    @Get(path = "{id}", docSummary = "详情")
     public Result<SenderEmailDomain> find(@PathVariable(name = "id") Long id) {
         SenderEmailDomain senderEmailDomain = super.service.find(id);
 
@@ -59,7 +59,8 @@ public class SenderEmailController extends BaseController<SenderEmailService> {
      * @param senderEmailVO
      */
     @Put(path = "{id}", docSummary = "修改", fieldGroup = "senderEmailUpdate")
-    public Result update(@PathVariable(name = "id") Long id, @RequestBody SenderEmailVO senderEmailVO) {
+    public Result update(
+            @PathVariable(name = "id") Long id, @RequestBody SenderEmailVO senderEmailVO) {
         senderEmailVO.setId(id);
         super.service.update(senderEmailVO);
 
