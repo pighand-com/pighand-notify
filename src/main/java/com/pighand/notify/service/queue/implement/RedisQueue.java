@@ -1,15 +1,16 @@
 package com.pighand.notify.service.queue.implement;
 
-import com.pighand.notify.service.queue.ConsumerCallbackInterface;
+import com.pighand.notify.service.queue.QueueAbstract;
 import com.pighand.notify.service.queue.QueueInterface;
 import com.pighand.notify.util.MachineUtil;
 import com.pighand.notify.vo.send.SendCommonVO;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.stream.StreamListener;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
-import org.springframework.data.redis.stream.Subscription;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -27,54 +28,94 @@ import java.util.Map;
  * @author wangshuli
  */
 @Component("redisQueue")
-public class RedisQueue<T extends SendCommonVO>
+public class RedisQueue<T extends SendCommonVO> extends QueueAbstract
         implements StreamListener<String, MapRecord<String, String, String>>,
                 QueueInterface<T, StreamInfo.XInfoStream> {
 
     private final String messageKey = "m";
 
-    private ConsumerCallbackInterface consumerCallbackService;
-
     @Autowired private StringRedisTemplate redisTemplate;
 
+    @Override
+    public void createQueue(String queueName) {
+        boolean hasKey = redisTemplate.hasKey(queueName);
+        if (!hasKey) {
+            var emptyRecord =
+                    StreamRecords.newRecord()
+                            .ofStrings(Map.of(queueName, ""))
+                            .withStreamKey(queueName);
+
+            redisTemplate.opsForStream().add(emptyRecord);
+            redisTemplate.opsForStream().trim(queueName, 0);
+        }
+    }
+
     /**
-     * redis在push消息时，自动创建。此处不用检测队列是否存在
+     * 创建消费者
      *
-     * @param queueName
-     * @return
+     * <p>队列不存在，先创建队列
+     *
+     * <p>如果消费者已存在，不创建
+     *
+     * @param queueName 队列名
+     * @param currentGroupName 组名
      */
     @Override
-    public StreamInfo.XInfoStream getQueue(String queueName) {
-        return null;
-    }
-
-    @Override
-    public void createQueue(String queueName) {}
-
-    @Override
     public void createConsumerGroup(String queueName, String currentGroupName) {
-        redisTemplate.opsForStream().createGroup(queueName, currentGroupName);
+        this.createQueue(queueName);
+
+        StreamInfo.XInfoGroups groups = redisTemplate.opsForStream().groups(queueName);
+
+        boolean hasGroup = false;
+        for (StreamInfo.XInfoGroup group : groups) {
+            hasGroup = group.groupName().equals(currentGroupName);
+
+            if (hasGroup) {
+                break;
+            }
+        }
+
+        if (!hasGroup) {
+            redisTemplate
+                    .opsForStream()
+                    .createGroup(queueName, ReadOffset.from("0"), currentGroupName);
+        }
     }
 
     @Override
-    public Subscription consumerSubscription(
-            Object listener, String consumerGroupName, String queueName) {
-        Subscription subscription =
-                ((StreamMessageListenerContainer) listener)
-                        .receive(
-                                Consumer.from(consumerGroupName, MachineUtil.getName()),
-                                StreamOffset.create(queueName, ReadOffset.lastConsumed()),
-                                this);
+    public StreamMessageListenerContainer consumerSubscription(
+            Object listener,
+            String consumerGroupName,
+            String queueName,
+            ThreadPoolTaskExecutor executor) {
+        executor.setThreadNamePrefix(executor.getThreadNamePrefix() + "redis-");
 
-        return subscription;
+        StreamMessageListenerContainer.StreamMessageListenerContainerOptions options =
+                StreamMessageListenerContainer.StreamMessageListenerContainerOptions.builder()
+                        .batchSize(1)
+                        .executor(executor)
+                        .build();
+
+        StreamMessageListenerContainer streamMessageListenerContainer =
+                StreamMessageListenerContainer.create(
+                        redisTemplate.getConnectionFactory(), options);
+
+        streamMessageListenerContainer.receive(
+                Consumer.from(consumerGroupName, MachineUtil.getName()),
+                StreamOffset.create(queueName, ReadOffset.lastConsumed()),
+                this);
+
+        streamMessageListenerContainer.start();
+
+        return streamMessageListenerContainer;
     }
 
     @Override
-    public void pushToQueue(StreamInfo.XInfoStream queue, String queueName, String message) {
+    public void pushToQueue(String queueName, String message) {
         Map<String, String> messageMap =
                 new HashMap(1) {
                     {
-                        put(messageKey, "message");
+                        put(messageKey, message);
                     }
                 };
 
@@ -83,14 +124,7 @@ public class RedisQueue<T extends SendCommonVO>
 
     @Override
     public void ask(String queueName, String consumerGroupName, String messageId) {
-        redisTemplate
-                .opsForStream()
-                .acknowledge(queueName, consumerGroupName, RecordId.of(messageId));
-    }
-
-    @Override
-    public void consumerCallback(ConsumerCallbackInterface consumerCallbackService) {
-        this.consumerCallbackService = consumerCallbackService;
+        redisTemplate.opsForStream().delete(queueName, messageId);
     }
 
     /**
@@ -100,7 +134,9 @@ public class RedisQueue<T extends SendCommonVO>
      */
     @Override
     public void onMessage(MapRecord<String, String, String> message) {
-        this.consumerCallbackService.sendConsumerMessage(
-                message.getId().getValue(), message.getValue().get(messageKey));
+        super.consumerCallbackServices
+                .get(message.getStream())
+                .sendConsumerMessage(
+                        message.getId().getValue(), message.getValue().get(messageKey));
     }
 }

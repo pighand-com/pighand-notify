@@ -1,5 +1,7 @@
 package com.pighand.notify.service.queue;
 
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
 /**
  * 消费者统一接口
  *
@@ -8,14 +10,6 @@ package com.pighand.notify.service.queue;
  * @author wangshuli
  */
 public interface QueueInterface<T, Q> {
-
-    /**
-     * 获取消息队列对象
-     *
-     * @param queueName
-     * @return queue object
-     */
-    Q getQueue(String queueName);
 
     /**
      * 创建消息队列
@@ -38,19 +32,23 @@ public interface QueueInterface<T, Q> {
      * @param listener
      * @param consumerGroupName
      * @param queueName
+     * @param executor
      * @return
      */
-    Object consumerSubscription(Object listener, String consumerGroupName, String queueName);
+    Object consumerSubscription(
+            Object listener,
+            String consumerGroupName,
+            String queueName,
+            ThreadPoolTaskExecutor executor);
 
     /**
      * 向消息队列推送消息
      *
-     * @param queue 队列对象
      * @param queueName 队列名
      * @param message
      * @return message id
      */
-    void pushToQueue(Q queue, String queueName, String message);
+    void pushToQueue(String queueName, String message);
 
     /**
      * 消费应答
@@ -64,7 +62,8 @@ public interface QueueInterface<T, Q> {
     /**
      * 处理监听返回的消息
      *
+     * @param queueName
      * @param method
      */
-    void consumerCallback(ConsumerCallbackInterface method);
+    void consumerCallback(String queueName, ConsumerCallbackInterface method);
 }

@@ -5,13 +5,16 @@ import com.aliyun.sdk.service.dysmsapi20170525.AsyncClient;
 import com.google.gson.Gson;
 import com.pighand.notify.common.EnumSMSPlatform;
 import com.pighand.notify.common.EnumTemplateParams;
-import com.pighand.notify.vo.send.SendSMSVO;
+import com.pighand.notify.vo.send.SendSmsVO;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.sms.v20210111.SmsClient;
 import com.tencentcloudapi.sms.v20210111.models.SendSmsRequest;
 import com.tencentcloudapi.sms.v20210111.models.SendSmsResponse;
+
 import darabonba.core.client.ClientOverrideConfiguration;
+
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -22,14 +25,15 @@ import java.util.concurrent.ExecutionException;
  *
  * @author wangshuli
  */
-public class SMSSender extends BaseSenderAbstract<SendSMSVO> {
+@Service
+public class SmsSender extends BaseSenderAbstract<SendSmsVO> {
 
     /**
      * 腾讯云
      *
      * @param message
      */
-    private void tencent(SendSMSVO message) throws TencentCloudSDKException {
+    private void tencent(SendSmsVO message) throws TencentCloudSDKException {
         Credential cred = new Credential("secretId", "secretKey");
         SmsClient client = new SmsClient(cred, "ap-guangzhou");
 
@@ -54,7 +58,7 @@ public class SMSSender extends BaseSenderAbstract<SendSMSVO> {
      *
      * @param message
      */
-    private void aliyun(SendSMSVO message) throws ExecutionException, InterruptedException {
+    private void aliyun(SendSmsVO message) throws ExecutionException, InterruptedException {
         StaticCredentialProvider provider =
                 StaticCredentialProvider.create(
                         com.aliyun.auth.credentials.Credential.builder()
@@ -87,13 +91,13 @@ public class SMSSender extends BaseSenderAbstract<SendSMSVO> {
     }
 
     @Override
-    protected Map<EnumTemplateParams, Object> replaceSendContent(SendSMSVO message)
+    protected Map<EnumTemplateParams, Object> replaceSendContent(SendSmsVO message)
             throws Exception {
         return null;
     }
 
     @Override
-    protected Boolean internalSendAsync(SendSMSVO message) throws Exception {
+    protected Boolean internalSendAsync(SendSmsVO message) throws Exception {
         if (message.getPlatform().equals(EnumSMSPlatform.ALIYUN)) {
             this.aliyun(message);
             return true;
@@ -103,5 +107,5 @@ public class SMSSender extends BaseSenderAbstract<SendSMSVO> {
     }
 
     @Override
-    protected void internalSend(SendSMSVO message) throws Exception {}
+    protected void internalSend(SendSmsVO message) throws Exception {}
 }

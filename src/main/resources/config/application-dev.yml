@@ -37,8 +37,8 @@ spring:
           max-wait: 0
           max-idle: 5
           min-idle: 1
-      timeout: 1000
+#      timeout: 100000
 
-#pighand:
-#  notify:
-#    queue: redisQueue
+pighand:
+  notify:
+    queue: redisQueue

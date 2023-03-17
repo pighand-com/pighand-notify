@@ -62,7 +62,7 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
     @Value("${pighand.notify.async-sender-pool.keep-alive: 60}")
     private Integer asyncSenderPoolKeepAlive;
 
-    @Value("${pighand.notify.async-sender-pool.thread-name: 'async-sender-'}")
+    @Value("${pighand.notify.async-sender-pool.thread-name: async-sender-}")
     private String asyncSenderPoolThreadName;
 
     @Value("${pighand.notify.queue: #{null}}")
@@ -95,7 +95,9 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
             this.queue = (QueueInterface<T, Object>) applicationContext.getBean(configQueueName);
 
             // 向消息队列实现类中，注入处理消费者消息的回调函数
-            queue.consumerCallback((messageId, message) -> sendConsumerMessage(messageId, message));
+            this.queue.consumerCallback(
+                    this.queueName,
+                    (messageId, message) -> sendConsumerMessage(messageId, message));
 
             isEnabledQueue = true;
         }
@@ -104,8 +106,13 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
     public BaseSenderAbstract() {
         Type type = getClass().getGenericSuperclass();
         Type argument = ((ParameterizedType) type).getActualTypeArguments()[0];
+        Class typeClass = ((Class) argument);
 
-        this.queueName = argument.getTypeName();
+        String typeName = typeClass.getName();
+        String packageName = typeClass.getPackageName();
+
+        this.queueName = String.format("queue%s", typeName.replace(packageName, ""));
+        this.consumerGroupName = String.format("consumer%s", typeName.replace(packageName, ""));
         this.clz = (Class<T>) argument;
     }
 
@@ -127,7 +134,7 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
      * @return
      */
     private T messageFromJson(String message) {
-        return (T) gson.fromJson(message, clz.getGenericSuperclass());
+        return (T) gson.fromJson(message, clz);
     }
 
     /**
@@ -139,7 +146,7 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
     public Object subscription(Object listener) {
         queue.createConsumerGroup(queueName, consumerGroupName);
 
-        return queue.consumerSubscription(listener, consumerGroupName, queueName);
+        return queue.consumerSubscription(listener, consumerGroupName, queueName, executor);
     }
 
     /**
@@ -149,14 +156,11 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
      */
     public void push(T vo) {
         // 队列不存在则创建
-        Object queueObject = queue.getQueue(queueName);
-        if (queueObject == null) {
-            queue.createQueue(queueName);
-        }
+        queue.createQueue(queueName);
 
         // 向队列推送消息
         String message = messageToJson(vo);
-        queue.pushToQueue(queueObject, queueName, message);
+        queue.pushToQueue(queueName, message);
     }
 
     /**
@@ -171,6 +175,7 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
             send(messageObject);
         } catch (Exception e) {
             log.error(e.getMessage());
+            e.printStackTrace();
         }
 
         queue.ask(queueName, consumerGroupName, messageId);
