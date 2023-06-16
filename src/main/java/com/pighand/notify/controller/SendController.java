@@ -27,7 +27,7 @@ public class SendController extends BaseController<MessageSender> {
             docSummary = "发送消息（同步）",
             docDescription = "同步发送。发送成功后返回")
     public Result content(@Validated SendMessageVO sendVO) throws Exception {
-        Map<EnumTemplateParams, Object> result = super.service.send(sendVO);
+        Map<EnumTemplateParams, String> result = super.service.send(sendVO);
 
         return new Result(result);
     }
@@ -38,7 +38,7 @@ public class SendController extends BaseController<MessageSender> {
             docSummary = "发送消息（异步）",
             docDescription = "异步发送。请求成功后直接返回")
     public Result contentAsync(@Validated SendMessageVO sendVO) throws Exception {
-        Map<EnumTemplateParams, Object> result = super.service.sendAsync(sendVO);
+        Map<EnumTemplateParams, String> result = super.service.sendAsync(sendVO);
 
         return new Result(result);
     }
@@ -50,7 +50,7 @@ public class SendController extends BaseController<MessageSender> {
             docDescription = "同步发送。发送成功后返回")
     public Result email(@Validated SendMessageVO sendVO) throws Exception {
         sendVO.setSenderType(EnumSenderType.EMAIL);
-        Map<EnumTemplateParams, Object> result = super.service.send(sendVO);
+        Map<EnumTemplateParams, String> result = super.service.send(sendVO);
 
         return new Result(result);
     }
@@ -62,7 +62,7 @@ public class SendController extends BaseController<MessageSender> {
             docDescription = "异步发送。请求成功后直接返回")
     public Result emailAsync(@Validated SendMessageVO sendVO) throws Exception {
         sendVO.setSenderType(EnumSenderType.EMAIL);
-        Map<EnumTemplateParams, Object> result = super.service.sendAsync(sendVO);
+        Map<EnumTemplateParams, String> result = super.service.sendAsync(sendVO);
 
         return new Result(result);
     }

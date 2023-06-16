@@ -1,5 +1,6 @@
 server:
   port: ${PORT:9091}
+  grpc-port: ${GRPC_PORT:9092}
 
 spring:
   datasource:

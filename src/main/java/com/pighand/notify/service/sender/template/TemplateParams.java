@@ -22,33 +22,6 @@ import java.util.regex.Pattern;
  */
 public class TemplateParams {
 
-    /** 模板参数替换方法 */
-    private interface DisposeInterface {
-
-        /**
-         * 处理模板参数
-         *
-         * @param matching
-         * @return
-         */
-        Object dispose(String matching);
-    }
-
-    /** 模板参数key */
-    @Data
-    private static class ParamKey {
-        /** 模板参数类型 */
-        private EnumTemplateParams type;
-
-        /** 查找正则 */
-        private String pattern;
-
-        public ParamKey(EnumTemplateParams type, String pattern) {
-            this.type = type;
-            this.pattern = pattern;
-        }
-    }
-
     /**
      * 模板替换信息
      *
@@ -62,7 +35,7 @@ public class TemplateParams {
      *
      * <p>{TIMESTAMP} 时间戳
      */
-    private static Map<ParamKey, DisposeInterface> params =
+    private static final Map<ParamKey, DisposeInterface> params =
             Map.of(
                     // CODE
                     new ParamKey(EnumTemplateParams.CODE, "\\{CODE\\}"),
@@ -108,7 +81,7 @@ public class TemplateParams {
         }
 
         String[] returnTemplates = new String[templates.length];
-        Map<EnumTemplateParams, Object> returnParams =
+        Map<EnumTemplateParams, String> returnParams =
                 new HashMap<>(Optional.ofNullable(returnTemplateParams).map(List::size).orElse(0));
 
         for (int i = 0; i < templates.length; i++) {
@@ -121,9 +94,10 @@ public class TemplateParams {
 
                 if (paramMatcher.find()) {
                     // 使用替换方法，计算替换内容
-                    Object replaceValue = returnParams.get(paramKey.getType());
+                    String replaceValue = returnParams.get(paramKey.getType());
                     if (replaceValue == null) {
-                        replaceValue = params.get(paramKey).dispose(paramMatcher.group(0));
+                        replaceValue =
+                                params.get(paramKey).dispose(paramMatcher.group(0)).toString();
                     }
 
                     // 根据returnTemplateParams判断是否需要返回参数值
@@ -132,7 +106,7 @@ public class TemplateParams {
                         returnParams.put(paramKey.getType(), replaceValue);
                     }
 
-                    template = template.replaceAll(paramKey.getPattern(), replaceValue.toString());
+                    template = template.replaceAll(paramKey.getPattern(), replaceValue);
                 }
             }
 
@@ -143,5 +117,32 @@ public class TemplateParams {
         templateParamsInfo.setReturnParams(returnParams);
 
         return templateParamsInfo;
+    }
+
+    /** 模板参数替换方法 */
+    private interface DisposeInterface {
+
+        /**
+         * 处理模板参数
+         *
+         * @param matching
+         * @return
+         */
+        Object dispose(String matching);
+    }
+
+    /** 模板参数key */
+    @Data
+    private static class ParamKey {
+        /** 模板参数类型 */
+        private EnumTemplateParams type;
+
+        /** 查找正则 */
+        private String pattern;
+
+        public ParamKey(EnumTemplateParams type, String pattern) {
+            this.type = type;
+            this.pattern = pattern;
+        }
     }
 }

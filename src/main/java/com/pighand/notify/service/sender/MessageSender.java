@@ -72,7 +72,7 @@ public class MessageSender extends BaseSenderAbstract<SendMessageVO> {
     }
 
     @Override
-    protected Map<EnumTemplateParams, Object> replaceSendContent(SendMessageVO message)
+    protected Map<EnumTemplateParams, String> replaceSendContent(SendMessageVO message)
             throws Exception {
         MessageContentDomain messageContentDomain =
                 messageContentMapper.selectById(message.getMessageId());

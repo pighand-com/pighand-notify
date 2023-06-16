@@ -19,7 +19,7 @@ public enum EnumSenderType {
     public static EnumSenderType get(int value) {
         return switch (value) {
             case 1 -> EMAIL;
-            default -> EMAIL;
+            default -> null;
         };
     }
 }

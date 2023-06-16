@@ -2,7 +2,6 @@ package com.pighand.notify.service.sender;
 
 import com.aliyun.auth.credentials.provider.StaticCredentialProvider;
 import com.aliyun.sdk.service.dysmsapi20170525.AsyncClient;
-import com.google.gson.Gson;
 import com.pighand.notify.common.EnumSMSPlatform;
 import com.pighand.notify.common.EnumTemplateParams;
 import com.pighand.notify.vo.send.SendSmsVO;
@@ -85,13 +84,12 @@ public class SmsSender extends BaseSenderAbstract<SendSmsVO> {
                 client.sendSms(sendSmsRequest);
 
         com.aliyun.sdk.service.dysmsapi20170525.models.SendSmsResponse resp = response.get();
-        System.out.println(new Gson().toJson(resp));
 
         client.close();
     }
 
     @Override
-    protected Map<EnumTemplateParams, Object> replaceSendContent(SendSmsVO message)
+    protected Map<EnumTemplateParams, String> replaceSendContent(SendSmsVO message)
             throws Exception {
         return null;
     }

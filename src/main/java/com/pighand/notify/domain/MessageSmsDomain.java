@@ -3,7 +3,7 @@ package com.pighand.notify.domain;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.pighand.framework.spring.api.annotation.field.RequestFieldException;
 import com.pighand.framework.spring.api.annotation.validation.ValidationGroup;
 import com.pighand.framework.spring.api.springdoc.dataType.EmptyObject;
@@ -28,6 +28,9 @@ import java.io.Serializable;
 @TableName(value = "message_sms")
 @Data
 public class MessageSmsDomain extends BaseDomain implements Serializable {
+    @TableField(exist = false)
+    private static final long serialVersionUID = 1L;
+
     @TableId
     @RequestFieldException("messageSmsCreate")
     @RequestFieldException("messageSmsUpdate")
@@ -65,8 +68,5 @@ public class MessageSmsDomain extends BaseDomain implements Serializable {
 
     @NotNull(groups = {ValidationGroup.Create.class})
     @Schema(description = "短信模板参数", implementation = EmptyObject.class)
-    private JsonObject templateParam;
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+    private JsonNode templateParam;
 }

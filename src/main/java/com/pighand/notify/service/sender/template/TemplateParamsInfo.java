@@ -1,6 +1,7 @@
 package com.pighand.notify.service.sender.template;
 
 import com.pighand.notify.common.EnumTemplateParams;
+
 import lombok.Data;
 
 import java.util.Map;
@@ -16,5 +17,5 @@ public class TemplateParamsInfo {
     String[] templates;
 
     /** 返回的模板参数 */
-    Map<EnumTemplateParams, Object> returnParams;
+    Map<EnumTemplateParams, String> returnParams;
 }

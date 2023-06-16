@@ -1,7 +1,7 @@
 package com.pighand.notify.service.sender;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pighand.notify.common.EnumTemplateParams;
 import com.pighand.notify.service.queue.QueueInterface;
 import com.pighand.notify.vo.send.SendCommonVO;
@@ -48,7 +48,10 @@ import java.util.Map;
 @Slf4j
 @Component
 public abstract class BaseSenderAbstract<T extends SendCommonVO> {
-    private ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    private final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    private final Class<T> clz;
+    private final ObjectMapper om = new ObjectMapper();
+    private final String queueName;
 
     @Value("${pighand.notify.async-sender-pool.core: 1}")
     private Integer asyncSenderPoolCore;
@@ -69,16 +72,21 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
     private String configQueueName;
 
     private Boolean isEnabledQueue = false;
-
     private QueueInterface<T, Object> queue;
-
-    private Class<T> clz;
-
-    private Gson gson = new Gson();
-
-    private String queueName;
-
     private String consumerGroupName = "default";
+
+    public BaseSenderAbstract() {
+        Type type = getClass().getGenericSuperclass();
+        Type argument = ((ParameterizedType) type).getActualTypeArguments()[0];
+        Class typeClass = ((Class) argument);
+
+        String typeName = typeClass.getName();
+        String packageName = typeClass.getPackageName();
+
+        this.queueName = String.format("queue%s", typeName.replace(packageName, ""));
+        this.consumerGroupName = String.format("consumer%s", typeName.replace(packageName, ""));
+        this.clz = (Class<T>) argument;
+    }
 
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) {
@@ -103,19 +111,6 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
         }
     }
 
-    public BaseSenderAbstract() {
-        Type type = getClass().getGenericSuperclass();
-        Type argument = ((ParameterizedType) type).getActualTypeArguments()[0];
-        Class typeClass = ((Class) argument);
-
-        String typeName = typeClass.getName();
-        String packageName = typeClass.getPackageName();
-
-        this.queueName = String.format("queue%s", typeName.replace(packageName, ""));
-        this.consumerGroupName = String.format("consumer%s", typeName.replace(packageName, ""));
-        this.clz = (Class<T>) argument;
-    }
-
     /**
      * 序列化要发送的消息
      *
@@ -123,8 +118,11 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
      * @return string
      */
     private String messageToJson(T vo) {
-        JsonElement json = gson.toJsonTree(vo);
-        return json.toString();
+        try {
+            return om.writeValueAsString(vo);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -134,7 +132,11 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
      * @return
      */
     private T messageFromJson(String message) {
-        return (T) gson.fromJson(message, clz);
+        try {
+            return om.readValue(message, clz);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -194,10 +196,10 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
      * @return
      * @throws Exception
      */
-    public Map<EnumTemplateParams, Object> sendAsync(T message) throws Exception {
+    public Map<EnumTemplateParams, String> sendAsync(T message) throws Exception {
         message.setIsFormatSendContents(true);
 
-        Map<EnumTemplateParams, Object> returnParams = this.replaceSendContent(message);
+        Map<EnumTemplateParams, String> returnParams = this.replaceSendContent(message);
 
         // 内部异步实现发送
         Boolean isHasSendAsync = internalSendAsync(message);
@@ -231,8 +233,8 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
      * @return
      * @throws Exception
      */
-    public Map<EnumTemplateParams, Object> send(T message) throws Exception {
-        Map<EnumTemplateParams, Object> returnParams = null;
+    public Map<EnumTemplateParams, String> send(T message) throws Exception {
+        Map<EnumTemplateParams, String> returnParams = null;
         if (message.getIsFormatSendContents() == null || !message.getIsFormatSendContents()) {
             returnParams = this.replaceSendContent(message);
         }
@@ -249,7 +251,7 @@ public abstract class BaseSenderAbstract<T extends SendCommonVO> {
      * @return
      * @throws Exception
      */
-    protected abstract Map<EnumTemplateParams, Object> replaceSendContent(T message)
+    protected abstract Map<EnumTemplateParams, String> replaceSendContent(T message)
             throws Exception;
 
     /**
